@@ -48,6 +48,33 @@ else:
     probabilities = generate_prob_file()
 
 
+def levensteinish_probability(original, typed):
+    probability = 1.0
+    orig_pos = 0
+    typed_pos = 0
+    while typed_pos < len(typed) and orig_pos < len(original):
+        if typed_pos < len(typed) - 1:
+            # the char at typed[typed_pos] could be an additional wrong character
+            if typed[typed_pos + 1:typed_pos + 3] == original[orig_pos:orig_pos + 2]:
+                typed_pos += 1
+                probability *= 0.07
+                continue
+        if orig_pos < len(original) - 1:
+            # the user could have forgotten to type char
+            if typed[typed_pos:typed_pos + 2] == original[orig_pos + 1:orig_pos + 3]:
+                orig_pos += 1
+                probability *= 0.07
+                continue
+        # the typed char could be wrong
+        if original[orig_pos] in probabilities and typed[typed_pos] in probabilities[original[orig_pos]]:
+            probability *= probabilities[original[orig_pos]][typed[typed_pos]]
+        else:
+            probability *= 0.69
+        typed_pos += 1
+        orig_pos += 1
+    return probability
+
+
 def get_typo_candidates(typed_string, k=50):
     candidates = [("", 1.0)]
     for char in typed_string.lower():
